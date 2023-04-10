@@ -18,14 +18,13 @@ def run_simple(
     # someone implement more languages
     evaluate = None
     func_impl_generator = None
-    if language == "python" or language == "py":
-        evaluate = py_evaluate
-        func_impl_generator = py_generate_func_impl
-    else:
+    if language not in {"python", "py"}:
         raise NotImplementedError(f"language {language} not supported")
-    
-    assert not evaluate is None
-    assert not func_impl_generator is None
+
+    evaluate = py_evaluate
+    func_impl_generator = py_generate_func_impl
+    assert evaluate is not None
+    assert func_impl_generator is not None
 
     num_items = len(dataset)
     num_success = 0
@@ -42,7 +41,7 @@ def run_simple(
                 break
             cur_pass += 1
         item["solution"] = cur_func_impl
-        
+
         item["is_solved"] = is_solved
         write_jsonl(log_path, [item], append=True)
 

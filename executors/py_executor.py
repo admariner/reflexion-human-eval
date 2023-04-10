@@ -87,8 +87,6 @@ def get_output(func: str, assert_statement: str, timeout: int = 5) -> str:
     except Exception as e:
         return str(type(e).__name__)
 
-if __name__ == "__main__":
-    pass
     # Test the function
     # func = "def add(a, b):\n    while True:\n        x = 1\n    return a + b"
     # tests = ["assert add(1, 2) == 3", "assert add(1, 2) == 4"]
