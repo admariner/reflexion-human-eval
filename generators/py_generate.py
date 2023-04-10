@@ -37,11 +37,18 @@ PY_TEST_GENERATION_COMPLETION_INSTRUCTION = f"""You are PythonGPT, an AI coding 
 PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are CodexGPT, an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring."""
 
 def py_generate_self_reflection(func: str, feedback: str, model: str) -> str:
-    if model == "gpt-4" or model == "gpt-3.5-turbo":
-        reflection = gpt_chat(model, PY_SELF_REFLECTION_CHAT_INSTRUCTION, f'{func}\n\n{feedback}\n\nExplanation:')
-    else:
-        reflection = gpt_completion(model, f'{PY_SELF_REFLECTION_COMPLETION_INSTRUCTION}\n{func}\n\n{feedback}\n\nExplanation:')
-    return reflection # type: ignore
+    return (
+        gpt_chat(
+            model,
+            PY_SELF_REFLECTION_CHAT_INSTRUCTION,
+            f'{func}\n\n{feedback}\n\nExplanation:',
+        )
+        if model in {"gpt-4", "gpt-3.5-turbo"}
+        else gpt_completion(
+            model,
+            f'{PY_SELF_REFLECTION_COMPLETION_INSTRUCTION}\n{func}\n\n{feedback}\n\nExplanation:',
+        )
+    )
 
 def py_generate_func_impl(
         func_sig: str,
@@ -51,12 +58,14 @@ def py_generate_func_impl(
         feedback: Optional[str] = None,
         self_reflection: Optional[str] = None
     ) -> str:
-    if strategy != "reflexion" and strategy != "simple":
+    if strategy not in ["reflexion", "simple"]:
         raise ValueError(f"Invalid strategy: given `{strategy}` but expected one of `reflexion` or `simple`")
     if strategy == "reflexion" and (prev_func_impl is None or feedback is None or self_reflection is None):
-        raise ValueError(f"Invalid arguments: given `strategy=reflexion` but `prev_func_impl`, `feedback`, or `self_reflection` is None")
+        raise ValueError(
+            "Invalid arguments: given `strategy=reflexion` but `prev_func_impl`, `feedback`, or `self_reflection` is None"
+        )
 
-    if model == "gpt-4" or model == "gpt-3.5-turbo":
+    if model in {"gpt-4", "gpt-3.5-turbo"}:
         if strategy == "reflexion":
             message = f"previous implementation:\n{prev_func_impl}\n\nunit tests:\n{feedback}\n\nhint:\n{self_reflection}\n\n# improved implementation\n{func_sig}"
             func_body = gpt_chat(model, PY_REFLEXION_CHAT_INSTRUCTION, message)
@@ -65,34 +74,25 @@ def py_generate_func_impl(
     else:
         if strategy == "reflexion":
             prompt = f"{PY_REFLEXION_COMPLETION_INSTRUCTION}\n{prev_func_impl}\n\nunit tests:\n{feedback}\n\nhint:\n{self_reflection}\n\n# improved implementation\n{func_sig}"
-            func_body = gpt_completion(model, prompt)
         else:
             prompt = f"{PY_SIMPLE_COMPLETION_INSTRUCTION}\n{func_sig}"
-            func_body = gpt_completion(model, prompt)
+        func_body = gpt_completion(model, prompt)
     return func_sig + func_body # type: ignore
 
 def py_generate_internal_tests(func_sig: str, model: str, committee_size: int=1) -> List[str]:
     def parse_tests(tests: str) -> List[str]:
         return [test.strip() for test in tests.splitlines() if "assert" in test]
+
     """
     Generates tests for a function using a refinement technique with the number
     of specified commmittee members.
     """
-    if model == "gpt-4" or model == "gpt-3.5-turbo":
+    if model in {"gpt-4", "gpt-3.5-turbo"}:
         message = f'{PY_TEST_GENERATION_FEW_SHOT}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = gpt_chat(model, PY_TEST_GENERATION_CHAT_INSTRUCTION, message)
     else:
         prompt = f'{PY_TEST_GENERATION_COMPLETION_INSTRUCTION}\n\nfunc signature:\n{func_sig}\nunit tests:'
         output = gpt_completion(model, prompt)
     cur_tests: List[str] = parse_tests(output) # type: ignore
-
-    # TODO: NOT SUPPORTED YET
-    # someone implement this
-    # cur_refinement_num = 0
-    # while cur_refinement_num < committee_size:
-        # # TODO: implement
-        # cur_tests = ... # type: ignore
-
-        # cur_refinement_num += 1
 
     return cur_tests

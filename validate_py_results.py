@@ -31,10 +31,10 @@ def validate_py_results(log_path: str):
                 print(f"Test {i}: {green_text_out}")
                 num_success += 1
             except Exception:
-                red_text_out = red_text(f"failed!")
+                red_text_out = red_text("failed!")
                 print(f"Test {i}: {red_text_out}")
         else:
-            red_text_out = red_text(f"failed!")
+            red_text_out = red_text("failed!")
             print(f"Test {i}: {red_text_out}")
     print(f"Summary: {num_success}/{len(data)} tests passed")
     print(f"Acc: {round(num_success/len(data), 2)} tests passed")

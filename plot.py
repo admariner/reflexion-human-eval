@@ -18,7 +18,7 @@ def plot_bar_graph(data_dict):
 
     # Set the y-axis range and tick marks
     plt.ylim(0, 1)
-    plt.yticks([i/10 for i in range(0, 11)], fontweight="bold")
+    plt.yticks([i/10 for i in range(11)], fontweight="bold")
 
     # Add the accuracy labels above each bar
     for i in range(len(labels)):

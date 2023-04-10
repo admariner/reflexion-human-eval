@@ -64,7 +64,11 @@ def gpt_chat(
 
 def parse_body(text):
     lines = text.split('\n')
-    for i in range(len(lines)-1, -1, -1):
-        if 'return' in lines[i]:
-            return '\n'.join(lines[:i+1])
-    return text
+    return next(
+        (
+            '\n'.join(lines[: i + 1])
+            for i in range(len(lines) - 1, -1, -1)
+            if 'return' in lines[i]
+        ),
+        text,
+    )

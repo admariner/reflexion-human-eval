@@ -21,20 +21,19 @@ def run_reflexion(
     self_reflection_generator = None
     func_impl_generator = None
     internal_test_generator = None
-    if language == "python" or language == "py":
-        evaluate = py_evaluate
-        execute = py_execute
-        self_reflection_generator = py_generate_self_reflection
-        func_impl_generator = py_generate_func_impl
-        internal_test_generator = py_generate_internal_tests
-    else:
+    if language not in {"python", "py"}:
         raise NotImplementedError(f"language {language} not supported")
 
-    assert not evaluate is None
-    assert not execute is None
-    assert not self_reflection_generator is None
-    assert not func_impl_generator is None
-    assert not internal_test_generator is None
+    evaluate = py_evaluate
+    execute = py_execute
+    self_reflection_generator = py_generate_self_reflection
+    func_impl_generator = py_generate_func_impl
+    internal_test_generator = py_generate_internal_tests
+    assert evaluate is not None
+    assert execute is not None
+    assert self_reflection_generator is not None
+    assert func_impl_generator is not None
+    assert internal_test_generator is not None
 
     num_items = len(dataset)
     num_success = 0
@@ -79,8 +78,12 @@ def run_reflexion(
 
                 # if solved, check if it passes the real tests, exit early
                 if is_passing or cur_iter == max_iters - 1:
-                    is_passing = evaluate(item["entry_point"], cur_func_impl, item["test"], timeout=10)
-                    if is_passing:
+                    if is_passing := evaluate(
+                        item["entry_point"],
+                        cur_func_impl,
+                        item["test"],
+                        timeout=10,
+                    ):
                         item["solution"] = cur_func_impl
                         is_solved = True
                         num_success += 1
